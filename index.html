@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบทำแบบทดสอบออนไลน์</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-5">
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-bold mb-4">แบบทดสอบออนไลน์</h2>
+        <div id="quizContainer"></div>
+        <button id="startQuiz" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">เริ่มทำข้อสอบ</button>
+        <button id="submitQuiz" class="mt-4 px-4 py-2 bg-green-500 text-white rounded hidden">ส่งคำตอบ</button>
+        <p id="timer" class="mt-4 text-red-500 font-bold"></p>
+        <p id="result" class="mt-4 font-bold"></p>
+        <button id="restartQuiz" class="mt-4 px-4 py-2 bg-yellow-500 text-white rounded hidden">เริ่มทำข้อสอบใหม่</button>
+    </div>
+
+    <script>
+        const quizData = [
+            { id: 1, text: "ระบบจัดการคลังสินค้าทำหน้าที่หลักอะไร?", choices: ["เก็บข้อมูลลูกค้า", "ตรวจสอบและบริหารสินค้าคงคลัง", "สร้างเว็บไซต์", "คำนวณภาษี"], correct: "ตรวจสอบและบริหารสินค้าคงคลัง" },
+            { id: 2, text: "การจัดเก็บข้อมูลสินค้าควรใช้โครงสร้างข้อมูลแบบใด?", choices: ["String", "JSON", "Boolean", "Integer"], correct: "JSON" },
+            { id: 3, text: "minStock คืออะไร?", choices: ["ราคาขั้นต่ำของสินค้า", "จำนวนขั้นต่ำที่ต้องมีในคลัง", "จำนวนสูงสุดที่ขายได้", "รหัสสินค้าพิเศษ"], correct: "จำนวนขั้นต่ำที่ต้องมีในคลัง" },
+            { id: 4, text: "คำสั่งใดใช้ตรวจสอบว่าสินค้าในสต็อกมีจำนวนน้อยกว่ากำหนด?", choices: ["if (stock > minStock)", "if (stock < minStock)", "if (stock === minStock)", "if (stock != minStock)"], correct: "if (stock < minStock)" },
+            { id: 5, text: "ค่าของ totalSales หมายถึงอะไร?", choices: ["จำนวนสินค้าทั้งหมดในคลัง", "ราคาสินค้ารวม", "ยอดขายรวมทั้งหมด", "จำนวนสินค้าที่ขายได้ต่อวัน"], correct: "ยอดขายรวมทั้งหมด" },
+            { id: 6, text: "คำสั่งใดใช้สำหรับจัดเก็บข้อมูลลงใน Local Storage?", choices: ["localStorage.getItem(key)", "localStorage.setItem(key, value)", "localStorage.removeItem(key)", "localStorage.clear()"], correct: "localStorage.setItem(key, value)" },
+            { id: 7, text: "คำสั่งใดใช้ดึงข้อมูลจาก Local Storage?", choices: ["localStorage.getItem(key)", "localStorage.setItem(key, value)", "localStorage.removeItem(key)", "localStorage.updateItem(key, value)"], correct: "localStorage.getItem(key)" },
+            { id: 8, text: "JSON.stringify() ใช้ทำอะไร?", choices: ["แปลง JSON เป็น Object", "แปลง Object เป็น JSON", "บันทึกข้อมูลไปยังฐานข้อมูล", "คำนวณยอดขายสินค้า"], correct: "แปลง Object เป็น JSON" },
+            { id: 9, text: "JSON.parse() ใช้ทำอะไร?", choices: ["แปลง JSON เป็น Object", "แปลง Object เป็น JSON", "ลบข้อมูลจาก Local Storage", "อัปเดตจำนวนสินค้า"], correct: "แปลง JSON เป็น Object" },
+            { id: 10, text: "ถ้าเราต้องการเคลียร์ข้อมูลทั้งหมดใน Local Storage ต้องใช้คำสั่งใด?", choices: ["localStorage.clear()", "localStorage.removeItem()", "localStorage.deleteAll()", "localStorage.reset()"], correct: "localStorage.clear()" },
+            { id: 11, text: "คำสั่ง if-else ใช้ทำอะไร?", choices: ["ใช้ทำซ้ำข้อมูล", "ใช้กำหนดเงื่อนไขในการทำงาน", "ใช้สร้างอาร์เรย์", "ใช้เก็บข้อมูลสินค้า"], correct: "ใช้กำหนดเงื่อนไขในการทำงาน" },
+            { id: 12, text: "คำสั่ง forEach() ใช้ทำอะไร?", choices: ["ใช้เพิ่มสินค้าใหม่", "ใช้ลบสินค้า", "ใช้แสดงข้อมูลทุกสินค้าที่มี", "ใช้ตรวจสอบว่าสินค้าหมดหรือไม่"], correct: "ใช้แสดงข้อมูลทุกสินค้าที่มี" },
+            { id: 13, text: "คำสั่ง for ใช้ทำอะไร?", choices: ["วนลูปเพื่อดำเนินการซ้ำ", "เชื่อมต่อฐานข้อมูล", "กำหนดค่าตัวแปร", "สร้างฟังก์ชัน"], correct: "วนลูปเพื่อดำเนินการซ้ำ" },
+            { id: 14, text: "คำสั่ง while ใช้ทำอะไร?", choices: ["วนลูปตราบใดที่เงื่อนไขเป็นจริง", "เพิ่มจำนวนสินค้า", "ลบสินค้าจากระบบ", "แปลง JSON เป็น Object"], correct: "วนลูปตราบใดที่เงื่อนไขเป็นจริง" },
+            { id: 15, text: "คำสั่ง break ใช้ทำอะไรในลูป?", choices: ["หยุดการทำงานของลูปทันที", "ข้ามการทำงานหนึ่งรอบของลูป", "ลบข้อมูลสินค้า", "เพิ่มสินค้าใหม่"], correct: "หยุดการทำงานของลูปทันที" },
+            { id: 16, text: "โครงสร้างข้อมูลแบบ Object เหมาะกับกรณีใด?", choices: ["เก็บข้อมูลสินค้าที่มีหลายคุณสมบัติ", "เก็บเฉพาะตัวเลข", "ใช้แทน JSON", "ใช้แทน String"], correct: "เก็บข้อมูลสินค้าที่มีหลายคุณสมบัติ" },
+            { id: 17, text: "ถ้าต้องการเก็บข้อมูลสินค้าหลายรายการควรใช้โครงสร้างข้อมูลแบบใด?", choices: ["Object", "Array", "String", "Boolean"], correct: "Array" },
+            { id: 18, text: "คำสั่ง push() ใช้ทำอะไรในอาร์เรย์?", choices: ["เพิ่มค่าลงท้ายอาร์เรย์", "ลบค่าล่าสุด", "ค้นหาค่าที่อยู่ในอาร์เรย์", "นับจำนวนข้อมูลในอาร์เรย์"], correct: "เพิ่มค่าลงท้ายอาร์เรย์" },
+            { id: 19, text: "คำสั่ง pop() ใช้ทำอะไร?", choices: ["เพิ่มค่าลงอาร์เรย์", "ลบค่าล่าสุดจากอาร์เรย์", "ลบค่าทั้งหมด", "คำนวณยอดขายสินค้า"], correct: "ลบค่าล่าสุดจากอาร์เรย์" },
+            { id: 20, text: "map() ใน JavaScript ใช้ทำอะไร?", choices: ["สร้างอาร์เรย์ใหม่จากอาร์เรย์เดิม", "ลบค่าจากอาร์เรย์", "เพิ่มค่าใหม่เข้าอาร์เรย์", "ค้นหาค่าที่อยู่ในอาร์เรย์"], correct: "สร้างอาร์เรย์ใหม่จากอาร์เรย์เดิม" }
+        ];
+
+        localStorage.setItem("quizData", JSON.stringify(quizData));
+        let selectedQuestions = [];
+        let timeLeft = 60;
+        let timerInterval;
+
+        document.getElementById("startQuiz").addEventListener("click", () => {
+            const storedQuizData = JSON.parse(localStorage.getItem("quizData"));
+            selectedQuestions = storedQuizData.sort(() => 0.5 - Math.random()).slice(0, 5);
+            renderQuiz();
+            document.getElementById("submitQuiz").classList.remove("hidden");
+            document.getElementById("startQuiz").classList.add("hidden");
+            startTimer();
+        });
+
+        function renderQuiz() {
+            const container = document.getElementById("quizContainer");
+            container.innerHTML = "";
+            selectedQuestions.forEach(q => {
+                const questionHTML = `<div class='mb-4'><p class='font-bold'>${q.text}</p>` +
+                    q.choices.map(choice => `
+                        <label class='block'>
+                            <input type='radio' name='q${q.id}' value='${choice}'> ${choice}
+                        </label>`).join('') + "</div>";
+                container.innerHTML += questionHTML;
+            });
+        }
+
+        function startTimer() {
+            timeLeft = 60;
+            document.getElementById("timer").textContent = `เวลาที่เหลือ: ${timeLeft} วินาที`;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").textContent = `เวลาที่เหลือ: ${timeLeft} วินาที`;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById("submitQuiz").click();
+                }
+            }, 1000);
+        }
+
+        document.getElementById("submitQuiz").addEventListener("click", () => {
+            clearInterval(timerInterval);
+            let score = 0;
+            selectedQuestions.forEach(q => {
+                const selectedAnswer = document.querySelector(`input[name='q${q.id}']:checked`);
+                if (selectedAnswer && selectedAnswer.value === q.correct) {
+                    score++;
+                }
+            });
+            document.getElementById("result").textContent = `คะแนนของคุณ: ${score} / 5`;
+            document.getElementById("submitQuiz").classList.add("hidden");
+            document.getElementById("restartQuiz").classList.remove("hidden");
+        });
+
+        document.getElementById("restartQuiz").addEventListener("click", () => {
+            document.getElementById("result").textContent = "";
+            document.getElementById("quizContainer").innerHTML = "";
+            document.getElementById("startQuiz").classList.remove("hidden");
+            document.getElementById("restartQuiz").classList.add("hidden");
+            document.getElementById("timer").textContent = "";
+        });
+    </script>
+</body>
+</html>
